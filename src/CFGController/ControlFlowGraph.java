@@ -11,30 +11,39 @@ import java.util.Queue;
  */
 public class ControlFlowGraph<T> {
 
-    Node<T> root = new Node<>("Begin",null,null);
+    Node<T> root = new Node<>(0,"Begin",null,null);
     Node<T> currentNode = root;
+    Integer id = 1;
 
     public ControlFlowGraph(){
 
     }
 
     public void addSequenceNode(String data, ParserRuleContext context){
-        Node<T> newNode = new Node(data,currentNode,context);
+        Node<T> newNode = new Node(this.id,data,currentNode,context);
         currentNode = newNode;
+        this.id = this.id + 1;
     }
 
     public Node<T> addBifurcationOnNode(Node<T> node,String data,ParserRuleContext context){
         Node auxNode = currentNode;
         currentNode = node;
-        Node<T> newNode = new Node<T>(data,currentNode,context);
+        Node<T> newNode = new Node<T>(this.id,data,currentNode,context);
         currentNode = newNode;
+        this.id = this.id +1;
         return auxNode;
     }
 
+    public void setCurrentNode(Node node){
+        this.currentNode = node;
+    }
     public Node<T> getCurrentNode(){
         return currentNode;
     }
 
+    public Node<T> getRoot(){
+        return root;
+    }
     public void printTree(){
         Queue<Node> queue = new ArrayDeque<>();
         queue.add(root);

@@ -6,8 +6,13 @@ if a == 10 :
 elif a == 8:
     print("Ocho")
 elif a == 7:
+    if x == 6:
+        print("adentro")
+    else:
+        print("Todavia adentro")
     print("Siete")
 else:
     print("not Diez")
     print("not more")
+print("salio")
 

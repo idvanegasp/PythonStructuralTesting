@@ -11,18 +11,21 @@ import java.util.List;
 public class Node<T>{
 
     private String data;
-    private Node<T> parent;
+    private List<Node<T>> parents;
     private List<Node<T>> children;
     private ParserRuleContext context;
     private Class contextClass;
+    private Integer id;
 
-    public Node(String data, Node<T> parent,ParserRuleContext context){
+    public Node(Integer id,String data, Node<T> parent,ParserRuleContext context){
+        this.id = id;
         this.data = data.replace("\n","");
         this.children = new LinkedList<>();
         this.context = context;
         if(this.context != null){
             this.contextClass = context.getClass();
         }
+        this.parents = new LinkedList<>();
         if(parent != null) {
             this.setParent(parent);
         }
@@ -30,7 +33,7 @@ public class Node<T>{
 
     public void setParent(Node<T> parent){
         parent.addChild(this);
-        this.parent = parent;
+        this.parents.add(parent);
     }
 
     public void addChild(Node<T> child){
@@ -41,8 +44,8 @@ public class Node<T>{
         return this.data;
     }
 
-    public Node<T> getParent(){
-        return this.parent;
+    public List<Node<T>> getParent(){
+        return this.parents;
     }
 
     public List<Node<T>> getChildren(){
@@ -55,5 +58,9 @@ public class Node<T>{
 
     public ParserRuleContext getContext(){
         return context;
+    }
+
+    public Integer getId(){
+        return this.id;
     }
 }

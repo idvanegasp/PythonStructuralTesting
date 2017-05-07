@@ -2,8 +2,12 @@
 package classes;
 import CFGController.ControlFlowGraph;
 import CFGController.Node;
+import GUI.PythonTesterGUI;
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 
+import javax.swing.*;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Stack;
 
 /**
@@ -24,6 +28,8 @@ public class MyPythonTesterVisitor<T> extends AbstractParseTreeVisitor<T> implem
 
     ControlFlowGraph cfg = new ControlFlowGraph();
     Stack<Node> bifurquedNodes = new Stack<>();
+    Integer val = 0;
+    HashMap<Integer, LinkedList<Node>> terminal_nodes = new HashMap<>();
 
     @Override public T visitSingle_input(Python3Parser.Single_inputContext ctx) {
 
@@ -53,6 +59,12 @@ public class MyPythonTesterVisitor<T> extends AbstractParseTreeVisitor<T> implem
 
         }
         cfg.printTree();
+        double height = java.awt.Toolkit.getDefaultToolkit().getScreenSize().getHeight();
+        double width = java.awt.Toolkit.getDefaultToolkit().getScreenSize().getWidth();
+        PythonTesterGUI frame = new PythonTesterGUI(cfg,(int)height,(int)width);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize((int)width, (int)height);
+        frame.setVisible(true);
         return null; }
     /**
      * {@inheritDoc}
@@ -133,6 +145,17 @@ public class MyPythonTesterVisitor<T> extends AbstractParseTreeVisitor<T> implem
     @Override public T visitStmt(Python3Parser.StmtContext ctx) {
         if(ctx.simple_stmt() != null){
             cfg.addSequenceNode(ctx.simple_stmt().getText(),ctx.simple_stmt());
+            for(Integer key:terminal_nodes.keySet()){
+                if(key > val){
+                    System.out.println(key);
+                    for(Node node:terminal_nodes.get(key)){
+                        if(!cfg.getCurrentNode().getParent().contains(node)) {
+                            cfg.getCurrentNode().setParent(node);
+                        }
+                    }
+                    terminal_nodes.remove(key);
+                }
+            }
             //System.out.println("Will visit statement: \n"+ctx.simple_stmt().getText());
             //visitSimple_stmt(ctx.simple_stmt());
         }
@@ -332,6 +355,7 @@ public class MyPythonTesterVisitor<T> extends AbstractParseTreeVisitor<T> implem
     @Override public T visitIf_stmt(Python3Parser.If_stmtContext ctx) {
 
         if(ctx.IF() != null){
+            val = val + 1;
             if(ctx.test(0) != null){
                 cfg.addSequenceNode(ctx.IF().getText() + " " + ctx.test(0).getText(),ctx.test(0));
                 bifurquedNodes.add(cfg.getCurrentNode());
@@ -340,6 +364,11 @@ public class MyPythonTesterVisitor<T> extends AbstractParseTreeVisitor<T> implem
             if(ctx.suite(0) != null) {
                 visitSuite(ctx.suite(0));
             }
+            if(!terminal_nodes.containsKey(val)){
+                terminal_nodes.put(val,new LinkedList());
+            }
+            terminal_nodes.get(val).add(cfg.getCurrentNode());
+
         }
         if(ctx.ELIF() != null){
             int index = 0;
@@ -354,17 +383,27 @@ public class MyPythonTesterVisitor<T> extends AbstractParseTreeVisitor<T> implem
                 if(ctx.suite(index+1) != null) {
                     visitSuite(ctx.suite(index+1));
                 }
+                if(!terminal_nodes.containsKey(val)){
+                    terminal_nodes.put(val,new LinkedList());
+                }
+                terminal_nodes.get(val).add(cfg.getCurrentNode());
                 index = index + 1;
             }
         }
 
         if(ctx.ELSE() != null){
             Node<T> bifurqued = bifurquedNodes.pop();
+            cfg.setCurrentNode(bifurqued);
             if(ctx.suite(ctx.suite().size()-1) != null) {
                 visitSuite(ctx.suite(ctx.suite().size()-1));
             }
+            if(!terminal_nodes.containsKey(val)){
+                terminal_nodes.put(val,new LinkedList());
+            }
+            terminal_nodes.get(val).add(cfg.getCurrentNode());
         }
 
+        val = val -1;
 
         return null;
 
