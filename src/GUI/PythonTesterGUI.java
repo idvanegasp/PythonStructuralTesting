@@ -36,10 +36,11 @@ public class PythonTesterGUI extends JFrame
 		getContentPane().add(graphComponent);
 
 		graph.getModel().beginUpdate();
-		Queue<Node> stack = new ArrayDeque<>();
+		Stack<Node> stack = new Stack<>();
 		stack.add(cfg.getRoot());
 		int x = 20;
 		int y = 20;
+		HashMap<Integer,HashMap<Integer,Integer>> points = new HashMap<>();
 		try
 		{
 			Node current = stack.peek();
@@ -51,7 +52,7 @@ public class PythonTesterGUI extends JFrame
 			Y.put(current.getId(),y);
 			while(!stack.isEmpty()){
 
-				current = stack.remove();
+				current = stack.pop();
 				prev = dict.get(current.getId());
 				y = Y.get(current.getId()) + 50;
 				x = X.get(current.getId());
@@ -60,6 +61,16 @@ public class PythonTesterGUI extends JFrame
 				}
 				for(Object da_node: current.getChildren()){
 					Node node = (Node) da_node;
+					if(points.containsKey(x) && points.get(x).containsKey(y)){
+
+						int max_value = 0;
+						for(Integer inte: points.keySet()){
+							if(inte > max_value){
+								max_value = inte;
+							}
+						};
+						x = max_value + 120;
+					}
 					if(dict.containsKey(node.getId())){
 
 						cur = dict.get(node.getId());
@@ -70,6 +81,14 @@ public class PythonTesterGUI extends JFrame
 								30);
 					}
 					graph.insertEdge(parent, null, "", prev, cur);
+					if(points.containsKey(x)){
+						if(!points.containsKey(y)){
+							points.get(x).put(y,1);
+						}
+					}else{
+						points.put(x,new HashMap<>());
+						points.get(x).put(y,1);
+					}
 					stack.add(node);
 					dict.put(node.getId(),cur);
 					X.put(node.getId(),x);
