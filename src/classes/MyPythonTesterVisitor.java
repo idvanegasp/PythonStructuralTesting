@@ -5,6 +5,7 @@ import CFGController.Node;
 import GUI.PythonTesterGUI;
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 
+import javax.naming.LimitExceededException;
 import javax.swing.*;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -30,6 +31,7 @@ public class MyPythonTesterVisitor<T> extends AbstractParseTreeVisitor<T> implem
     Stack<Node> bifurquedNodes = new Stack<>();
     Integer val = 0;
     HashMap<Integer, LinkedList<Node>> terminal_nodes = new HashMap<>();
+    LinkedList<Node> auxNodes = new LinkedList<>();
 
     @Override public T visitSingle_input(Python3Parser.Single_inputContext ctx) {
 
@@ -144,7 +146,15 @@ public class MyPythonTesterVisitor<T> extends AbstractParseTreeVisitor<T> implem
      */
     @Override public T visitStmt(Python3Parser.StmtContext ctx) {
         if(ctx.simple_stmt() != null){
-            cfg.addSequenceNode(ctx.simple_stmt().getText(),ctx.simple_stmt());
+            if(auxNodes.size() == 0) {
+                cfg.addSequenceNode(ctx.simple_stmt().getText(), ctx.simple_stmt());
+            }else{
+                try {
+                    cfg.replace_aux_Node(auxNodes.pop(),ctx.simple_stmt().getText(), ctx.simple_stmt());
+                }catch(Exception e){
+                    e.printStackTrace();
+                }
+            }
             for(Integer key:terminal_nodes.keySet()){
                 if(key > val){
                     System.out.println(key);
@@ -344,6 +354,9 @@ public class MyPythonTesterVisitor<T> extends AbstractParseTreeVisitor<T> implem
         if(ctx.if_stmt() != null){
             visitIf_stmt(ctx.if_stmt());
         }
+        if(ctx.while_stmt() != null){
+            visitWhile_stmt(ctx.while_stmt());
+        }
         return null;
     }
     /**
@@ -414,7 +427,40 @@ public class MyPythonTesterVisitor<T> extends AbstractParseTreeVisitor<T> implem
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitWhile_stmt(Python3Parser.While_stmtContext ctx) { return visitChildren(ctx); }
+    @Override public T visitWhile_stmt(Python3Parser.While_stmtContext ctx) {
+        if(ctx.WHILE() != null){
+            if(ctx.test() != null){
+                cfg.addSequenceNode(ctx.WHILE().getText() + " " + ctx.test().getText(),ctx.test());
+                bifurquedNodes.add(cfg.getCurrentNode());
+                System.out.println("Bifurqued While");
+            }
+
+            cfg.addSequenceNode("Not_valid",ctx);
+            Node<T> auxNode = cfg.getCurrentNode();
+
+            if(ctx.suite(0) != null) {
+                Node<T> bifurqued = bifurquedNodes.pop();
+                cfg.setCurrentNode(bifurqued);
+                visitSuite(ctx.suite(0));
+                cfg.pointAlreadyCreatedNode(bifurqued);
+                for(Integer key:terminal_nodes.keySet()){
+                    if(key > val){
+                        System.out.println(key);
+                        for(Node mynode:terminal_nodes.get(key)){
+                            if(!cfg.getCurrentNode().getParent().contains(mynode)) {
+                                cfg.getCurrentNode().setParent(mynode);
+                            }
+                        }
+                        terminal_nodes.remove(key);
+                    }
+                }
+            }
+
+            auxNodes.add(auxNode);
+
+        }
+        return null;
+    }
     /**
      * {@inheritDoc}
      *

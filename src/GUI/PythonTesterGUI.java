@@ -35,9 +35,12 @@ public class PythonTesterGUI extends JFrame
 		mxGraphComponent graphComponent = new mxGraphComponent(graph);
 		getContentPane().add(graphComponent);
 
+		LinkedList<Integer> visited = new LinkedList<>();
+
 		graph.getModel().beginUpdate();
 		Stack<Node> stack = new Stack<>();
 		stack.add(cfg.getRoot());
+		visited.add(cfg.getRoot().getId());
 		int x = 20;
 		int y = 20;
 		HashMap<Integer,HashMap<Integer,Integer>> points = new HashMap<>();
@@ -89,7 +92,10 @@ public class PythonTesterGUI extends JFrame
 						points.put(x,new HashMap<>());
 						points.get(x).put(y,1);
 					}
-					stack.add(node);
+					if(!visited.contains(node.getId())){
+						stack.add(node);
+						visited.add(node.getId());
+					}
 					dict.put(node.getId(),cur);
 					X.put(node.getId(),x);
 					Y.put(node.getId(),y);

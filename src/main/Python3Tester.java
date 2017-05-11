@@ -13,7 +13,7 @@ public class Python3Tester {
 
     public static void main(String[] args)throws Exception{
 
-        System.setIn(new FileInputStream(new File("input.py")));
+        System.setIn(new FileInputStream(new File("while_input.py")));
         ANTLRInputStream input = new ANTLRInputStream(System.in);
         Python3Lexer lexer = new Python3Lexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
