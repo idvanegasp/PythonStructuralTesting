@@ -3,7 +3,9 @@ package CFGController;
 import classes.Python3Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
 
+import javax.naming.SizeLimitExceededException;
 import java.util.ArrayDeque;
+import java.util.LinkedList;
 import java.util.Queue;
 
 /**
@@ -25,6 +27,24 @@ public class ControlFlowGraph<T> {
         this.id = this.id + 1;
     }
 
+    public void pointAlreadyCreatedNode(Node<T> node){
+        node.setParent(this.currentNode);
+        this.currentNode = node;
+    }
+
+    public void replace_aux_Node(Node<T> node, String data, ParserRuleContext context) throws SizeLimitExceededException {
+        if(node.getParent().size() != 1){
+            throw new SizeLimitExceededException("Size of AuxNode should be one");
+        }
+        Node parent = node.getParent().get(0);
+        Integer index = parent.getChildren().indexOf(node);
+        parent.getChildren().remove(node);
+        Node<T> newNode = new Node<T>(this.id,data,null,context);
+        parent.getChildren().add(index,newNode);
+        newNode.getParent().add(parent);
+        this.id = this.id + 1;
+        this.currentNode = newNode;
+    }
     public Node<T> addBifurcationOnNode(Node<T> node,String data,ParserRuleContext context){
         Node auxNode = currentNode;
         currentNode = node;
@@ -45,8 +65,10 @@ public class ControlFlowGraph<T> {
         return root;
     }
     public void printTree(){
+        LinkedList<Integer> visited = new LinkedList<>();
         Queue<Node> queue = new ArrayDeque<>();
         queue.add(root);
+        visited.add(root.getId());
         Node current;
         while(queue.size() != 0){
             current = queue.remove();
@@ -64,7 +86,10 @@ public class ControlFlowGraph<T> {
                     Python3Parser.TestContext cont = (Python3Parser.TestContext) current_child.getContext();
                     System.out.println("         "+cont.getClass());
                 }
-                queue.add(current_child);
+                if(!visited.contains(current_child.getId())) {
+                    queue.add(current_child);
+                    visited.add(current_child.getId());
+                }
             }
         }
     }
