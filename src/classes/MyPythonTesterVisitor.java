@@ -31,6 +31,7 @@ public class MyPythonTesterVisitor<T> extends AbstractParseTreeVisitor<T> implem
     Stack<Node> bifurquedNodes = new Stack<>();
     Integer val = 0;
     HashMap<Integer, LinkedList<Node>> terminal_nodes = new HashMap<>();
+    LinkedList<Node> breaks = new LinkedList<>();
     LinkedList<Node> auxNodes = new LinkedList<>();
 
     @Override public T visitSingle_input(Python3Parser.Single_inputContext ctx) {
@@ -148,6 +149,9 @@ public class MyPythonTesterVisitor<T> extends AbstractParseTreeVisitor<T> implem
         if(ctx.simple_stmt() != null){
             if(auxNodes.size() == 0) {
                 cfg.addSequenceNode(ctx.simple_stmt().getText(), ctx.simple_stmt());
+                if(cfg.getCurrentNode().getData().toLowerCase().compareTo("break ") == 0){
+                    breaks.add(cfg.getCurrentNode());
+                }
             }else{
                 try {
                     cfg.replace_aux_Node(auxNodes.pop(),ctx.simple_stmt().getText(), ctx.simple_stmt());
@@ -472,6 +476,11 @@ public class MyPythonTesterVisitor<T> extends AbstractParseTreeVisitor<T> implem
                 }
             }
 
+            for(Node node: breaks){
+                while(node.getChildren().size() != 0){
+                    node.getChildren().remove(0);
+                }
+            }
             auxNodes.add(auxNode);
 
         }
