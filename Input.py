@@ -14,5 +14,6 @@ elif a == 7:
 else:
     print("not Diez")
     print("not more")
-print("salio")
+if a == 9:
+    print("bug")
 
