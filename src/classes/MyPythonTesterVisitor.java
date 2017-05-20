@@ -367,13 +367,29 @@ public class MyPythonTesterVisitor<T> extends AbstractParseTreeVisitor<T> implem
      */
     @Override public T visitIf_stmt(Python3Parser.If_stmtContext ctx) {
 
+
+
         if(ctx.IF() != null){
-            val = val + 1;
             if(ctx.test(0) != null){
                 cfg.addSequenceNode(ctx.IF().getText() + " " + ctx.test(0).getText(),ctx.test(0));
                 bifurquedNodes.add(cfg.getCurrentNode());
                 System.out.println("Bifurqued if");
             }
+            for(Integer key:terminal_nodes.keySet()){
+                if(key > val){
+                    System.out.println(key);
+                    for(Node node:terminal_nodes.get(key)){
+                        if(!cfg.getCurrentNode().getParent().contains(node)) {
+                            cfg.getCurrentNode().setParent(node);
+                        }
+                    }
+                    terminal_nodes.remove(key);
+                }
+            }
+
+            val = val + 1;
+
+
             if(ctx.suite(0) != null) {
                 visitSuite(ctx.suite(0));
             }
