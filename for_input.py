@@ -5,4 +5,4 @@ for x in numes:
     var1 = var1+1
     var2 = x
     print (var1 + " " +var2 )
-print ("exit FOR")
+

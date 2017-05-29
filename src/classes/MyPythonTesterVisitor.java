@@ -34,12 +34,10 @@ public class MyPythonTesterVisitor<T> extends AbstractParseTreeVisitor<T> implem
     HashMap<Integer, LinkedList<Node>> terminal_nodes = new HashMap<>();
     LinkedList<Node> breaks = new LinkedList<>();
     LinkedList<Node> auxNodes = new LinkedList<>();
-    public StringBuilder sb = new StringBuilder("");
 
     @Override public T visitSingle_input(Python3Parser.Single_inputContext ctx) {
 
         System.out.println(ctx.getText());
-        sb.append(ctx.getText());
 
         if(ctx.simple_stmt() != null){
             visitSimple_stmt(ctx.simple_stmt());
@@ -48,7 +46,6 @@ public class MyPythonTesterVisitor<T> extends AbstractParseTreeVisitor<T> implem
         if(ctx.compound_stmt() != null){
             visitCompound_stmt(ctx.compound_stmt());
         }
-
         return visitChildren(ctx);
     }
     /**
@@ -160,13 +157,11 @@ public class MyPythonTesterVisitor<T> extends AbstractParseTreeVisitor<T> implem
                     cfg.replace_aux_Node(auxNodes.pop(),ctx.simple_stmt().getText(), ctx.simple_stmt());
                 }catch(Exception e){
                     e.printStackTrace();
-                    sb.append("printStackTrace");
                 }
             }
             for(Integer key:terminal_nodes.keySet()){
                 if(key > val){
                     System.out.println(key);
-                    sb.append(key);
                     for(Node node:terminal_nodes.get(key)){
                         if(!cfg.getCurrentNode().getParent().contains(node)) {
                             cfg.getCurrentNode().setParent(node);
@@ -366,7 +361,7 @@ public class MyPythonTesterVisitor<T> extends AbstractParseTreeVisitor<T> implem
         if(ctx.while_stmt() != null){
             visitWhile_stmt(ctx.while_stmt());
         }
-        if (ctx.for_stmt()!= null){
+        if(ctx.for_stmt() != null){
             visitFor_stmt(ctx.for_stmt());
         }
         return null;
@@ -386,7 +381,6 @@ public class MyPythonTesterVisitor<T> extends AbstractParseTreeVisitor<T> implem
                 cfg.addSequenceNode(ctx.IF().getText() + " " + ctx.test(0).getText(),ctx.test(0));
                 bifurquedNodes.add(cfg.getCurrentNode());
                 System.out.println("Bifurqued if");
-                sb.append("Bifurqued if\n");
             }
             for(Integer key:terminal_nodes.keySet()){
                 if(key > val){
@@ -421,7 +415,6 @@ public class MyPythonTesterVisitor<T> extends AbstractParseTreeVisitor<T> implem
                     cfg.addBifurcationOnNode(bifurqued,ctx.ELIF(index).getText()+" "+ctx.test(index+1).getText(),ctx.test(index+1));
                     bifurquedNodes.add(cfg.getCurrentNode());
                     System.out.println("Bifurqued elif");
-                    sb.append("Bifurqued elif\n");
                 }
                 if(ctx.suite(index+1) != null) {
                     visitSuite(ctx.suite(index+1));
@@ -458,13 +451,11 @@ public class MyPythonTesterVisitor<T> extends AbstractParseTreeVisitor<T> implem
      * {@link #visitChildren} on {@code ctx}.</p>
      */
     @Override public T visitWhile_stmt(Python3Parser.While_stmtContext ctx) {
-        System.out.println("\n");
         if(ctx.WHILE() != null){
             if(ctx.test() != null){
                 cfg.addSequenceNode(ctx.WHILE().getText() + " " + ctx.test().getText(),ctx.test());
                 bifurquedNodes.add(cfg.getCurrentNode());
                 System.out.println("Bifurqued While");
-                sb.append("Bifurqued while\n");
             }
 
             cfg.addSequenceNode("Not_valid",ctx);
@@ -510,7 +501,7 @@ public class MyPythonTesterVisitor<T> extends AbstractParseTreeVisitor<T> implem
         if(ctx.FOR() != null){
             System.out.println("Loop For;") ;
             if(ctx.exprlist() != null){
-                //System.out.println("expresion");
+          //      System.out.println("expresion");
                 if(ctx.IN() != null){
                     if (ctx.testlist() != null){
                         cfg.addSequenceNode(ctx.FOR().getText() + " " +
@@ -541,11 +532,7 @@ public class MyPythonTesterVisitor<T> extends AbstractParseTreeVisitor<T> implem
                     }
                 }
             }
-            for(Node node: breaks){
-                while(node.getChildren().size() != 0){
-                    node.getChildren().remove(0);
-                }
-            }
+
             auxNodes.add(auxNode);
 
         }
