@@ -2,18 +2,27 @@ package GUI;
 
 import CFGController.ControlFlowGraph;
 import CFGController.Node;
+import classes.MyPythonTesterVisitor;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.swing.mxGraphComponent;
+import com.mxgraph.util.mxRectangle;
 import com.mxgraph.view.mxGraph;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.time.Clock;
 import java.util.*;
 
-public class PythonTesterGUI extends JFrame
+import com.mxgraph.util.mxConstants;
+
+
+public class PythonTesterGUI extends JFrame implements  ActionListener
 {
 
 	/**
-	 * 
+	 *
 	 */
 
 	public mxCell prev;
@@ -23,21 +32,44 @@ public class PythonTesterGUI extends JFrame
 	public HashMap<Integer, Integer> X = new HashMap<>();
 	public HashMap<Integer, Integer> Y = new HashMap<>();
 
+	JTextArea jta = new JTextArea("testing");
+	JButton up = new JButton("upload");
+	JTextField jtf = new JTextField("reading: ...INPUT FILE");
+	private JPanel jp_graph = new JPanel();
+	private JPanel other = new JPanel();
+	private JPanel options = new JPanel();
 	private static final long serialVersionUID = -2707712944901661771L;
+
+
 
 	public PythonTesterGUI(ControlFlowGraph cfg, int height, int width)
 	{
 		super("Control Flow Graph");
+		this.setLayout(new GridLayout(1,2, 10,10));
+
+		jp_graph.setLayout(new GridLayout());
+		other.setLayout(new GridLayout(2,1,5,5));
 
 		mxGraph graph = new mxGraph();
-		Object parent = graph.getDefaultParent();
-
 		mxGraphComponent graphComponent = new mxGraphComponent(graph);
-		getContentPane().add(graphComponent);
+
+		// lock interaction
+		Object parent = graph.getDefaultParent();
+		graphComponent.setEnabled(false);
+		//graphComponent.setAutoscrolls(true);
+		//graphComponent.setBounds(20,20,1200,1200);
+		//this.getContentPane().setLayout(new GridBagLayout());
+		//getContentPane().setBounds(20,30,2000,2000);
+
+		getContentPane().add(jp_graph);
+		getContentPane().add(other);
+		jp_graph.setAutoscrolls(true);
+		jp_graph.add(graphComponent);
 
 		LinkedList<Integer> visited = new LinkedList<>();
 
 		graph.getModel().beginUpdate();
+
 		Stack<Node> stack = new Stack<>();
 		stack.add(cfg.getRoot());
 		visited.add(cfg.getRoot().getId());
@@ -107,12 +139,38 @@ public class PythonTesterGUI extends JFrame
 		}
 		finally
 		{
+
+			graphComponent.setBackground(Color.ORANGE);
 			graph.getModel().endUpdate();
+
 		}
 
-		//graph.setCellStyles(mxConstants.STYLE_FILLCOLOR, "green", new Object[]{prev}); //changes the color to red
-		//graphComponent.refresh();
+		graph.setCellStyles(mxConstants.STYLE_FILLCOLOR, "green", new Object[]{prev}); //changes the color to red
 
+
+		options.setLayout( new GridLayout(1,2, 5, 5));
+		other.add(options);
+
+		options.add(jtf,0);
+
+		up.setSize(80,50);
+		up.setBackground(Color.red);
+		up.addActionListener((ActionListener) this);
+
+		options.add(up, 1);
+		other.add(jta);
+		//this.getContentPane().add(new JScrollPane());
+		/*Panel t_cases = new JPanel();
+		JButton send = new JButton("send");
+		send.setBounds(30,30,50,50);
+		t_cases.add(send);
+		getContentPane().add(t_cases, 3);
+		getContentPane().add(new JTextField("Hi"), 2);
+		getContentPane().add(new JTextArea("COVERAGE TESTS largint"), 4);
+        getContentPane().add(new JTextArea("COVERAGE TESTS largint"), 4);
+        getContentPane().add(new JTextArea("COVERAGE TESTS largint3"));
+        getContentPane().add(new JTextArea("COVERAGE TESTS largint4444"));
+*/
 
 	}
 
@@ -126,4 +184,9 @@ public class PythonTesterGUI extends JFrame
 		frame.setVisible(true);
 	}
 
+	@Override
+	public void actionPerformed(ActionEvent e) {
+
+		jta.setText("import StringBuilder from cfg / MyPythonTesterVisitor;");
+	}
 }
