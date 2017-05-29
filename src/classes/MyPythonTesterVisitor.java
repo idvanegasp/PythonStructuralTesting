@@ -4,6 +4,7 @@ import CFGController.ControlFlowGraph;
 import CFGController.Node;
 import GUI.PythonTesterGUI;
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
+import sun.jvm.hotspot.StackTrace;
 
 import javax.naming.LimitExceededException;
 import javax.swing.*;
@@ -31,12 +32,14 @@ public class MyPythonTesterVisitor<T> extends AbstractParseTreeVisitor<T> implem
     Stack<Node> bifurquedNodes = new Stack<>();
     Integer val = 0;
     HashMap<Integer, LinkedList<Node>> terminal_nodes = new HashMap<>();
-    LinkedList<Node> breaks = new LinkedList<>();
     LinkedList<Node> auxNodes = new LinkedList<>();
+
+    public StringBuilder sb = new StringBuilder("");
 
     @Override public T visitSingle_input(Python3Parser.Single_inputContext ctx) {
 
         System.out.println(ctx.getText());
+        sb.append(ctx.getText());
 
         if(ctx.simple_stmt() != null){
             visitSimple_stmt(ctx.simple_stmt());
@@ -45,7 +48,6 @@ public class MyPythonTesterVisitor<T> extends AbstractParseTreeVisitor<T> implem
         if(ctx.compound_stmt() != null){
             visitCompound_stmt(ctx.compound_stmt());
         }
-
         return visitChildren(ctx);
     }
     /**
@@ -68,6 +70,7 @@ public class MyPythonTesterVisitor<T> extends AbstractParseTreeVisitor<T> implem
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize((int)width, (int)height);
         frame.setVisible(true);
+
         return null; }
     /**
      * {@inheritDoc}
@@ -149,14 +152,12 @@ public class MyPythonTesterVisitor<T> extends AbstractParseTreeVisitor<T> implem
         if(ctx.simple_stmt() != null){
             if(auxNodes.size() == 0) {
                 cfg.addSequenceNode(ctx.simple_stmt().getText(), ctx.simple_stmt());
-                if(cfg.getCurrentNode().getData().toLowerCase().compareTo("break ") == 0){
-                    breaks.add(cfg.getCurrentNode());
-                }
             }else{
                 try {
                     cfg.replace_aux_Node(auxNodes.pop(),ctx.simple_stmt().getText(), ctx.simple_stmt());
                 }catch(Exception e){
                     e.printStackTrace();
+                    sb.append("printStackTrace");
                 }
             }
             for(Integer key:terminal_nodes.keySet()){
@@ -361,6 +362,9 @@ public class MyPythonTesterVisitor<T> extends AbstractParseTreeVisitor<T> implem
         if(ctx.while_stmt() != null){
             visitWhile_stmt(ctx.while_stmt());
         }
+        if (ctx.for_stmt()!= null){
+            visitFor_stmt(ctx.for_stmt());
+        }
         return null;
     }
     /**
@@ -371,29 +375,14 @@ public class MyPythonTesterVisitor<T> extends AbstractParseTreeVisitor<T> implem
      */
     @Override public T visitIf_stmt(Python3Parser.If_stmtContext ctx) {
 
-
-
         if(ctx.IF() != null){
+            val = val + 1;
             if(ctx.test(0) != null){
                 cfg.addSequenceNode(ctx.IF().getText() + " " + ctx.test(0).getText(),ctx.test(0));
                 bifurquedNodes.add(cfg.getCurrentNode());
                 System.out.println("Bifurqued if");
+                sb.append("Bifurqued if\n");
             }
-            for(Integer key:terminal_nodes.keySet()){
-                if(key > val){
-                    System.out.println(key);
-                    for(Node node:terminal_nodes.get(key)){
-                        if(!cfg.getCurrentNode().getParent().contains(node)) {
-                            cfg.getCurrentNode().setParent(node);
-                        }
-                    }
-                    terminal_nodes.remove(key);
-                }
-            }
-
-            val = val + 1;
-
-
             if(ctx.suite(0) != null) {
                 visitSuite(ctx.suite(0));
             }
@@ -412,6 +401,7 @@ public class MyPythonTesterVisitor<T> extends AbstractParseTreeVisitor<T> implem
                     cfg.addBifurcationOnNode(bifurqued,ctx.ELIF(index).getText()+" "+ctx.test(index+1).getText(),ctx.test(index+1));
                     bifurquedNodes.add(cfg.getCurrentNode());
                     System.out.println("Bifurqued elif");
+                    sb.append("Bifurqued elif\n");
                 }
                 if(ctx.suite(index+1) != null) {
                     visitSuite(ctx.suite(index+1));
@@ -448,11 +438,13 @@ public class MyPythonTesterVisitor<T> extends AbstractParseTreeVisitor<T> implem
      * {@link #visitChildren} on {@code ctx}.</p>
      */
     @Override public T visitWhile_stmt(Python3Parser.While_stmtContext ctx) {
+        System.out.println("\n");
         if(ctx.WHILE() != null){
             if(ctx.test() != null){
                 cfg.addSequenceNode(ctx.WHILE().getText() + " " + ctx.test().getText(),ctx.test());
                 bifurquedNodes.add(cfg.getCurrentNode());
                 System.out.println("Bifurqued While");
+                sb.append("Bifurqued while\n");
             }
 
             cfg.addSequenceNode("Not_valid",ctx);
@@ -476,11 +468,6 @@ public class MyPythonTesterVisitor<T> extends AbstractParseTreeVisitor<T> implem
                 }
             }
 
-            for(Node node: breaks){
-                while(node.getChildren().size() != 0){
-                    node.getChildren().remove(0);
-                }
-            }
             auxNodes.add(auxNode);
 
         }
@@ -492,7 +479,49 @@ public class MyPythonTesterVisitor<T> extends AbstractParseTreeVisitor<T> implem
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitFor_stmt(Python3Parser.For_stmtContext ctx) { return visitChildren(ctx); }
+    @Override public T visitFor_stmt(Python3Parser.For_stmtContext ctx)
+    {
+        System.out.println("\n entra FOR");
+        if(ctx.FOR() != null){
+            System.out.println("Loop For;") ;
+            if(ctx.exprlist() != null){
+                System.out.println("expresion");
+                if(ctx.IN() != null){
+                    if (ctx.testlist() != null){
+                        cfg.addSequenceNode(ctx.FOR().getText() + " " +
+                                        ctx.exprlist().getText()+" " +ctx.IN().getText() + " " + ctx.testlist().getText()
+                                ,ctx);
+                        bifurquedNodes.add(cfg.getCurrentNode());
+                    }
+                }
+            }
+
+            cfg.addSequenceNode("NoMoreRead",ctx);
+            Node<T> auxNode = cfg.getCurrentNode();
+
+            if(ctx.suite(0) != null) {
+                Node<T> bifurqued = bifurquedNodes.pop();
+                cfg.setCurrentNode(bifurqued);
+                visitSuite(ctx.suite(0));
+                cfg.pointAlreadyCreatedNode(bifurqued);
+                for(Integer key:terminal_nodes.keySet()){
+                    if(key > val){
+                        System.out.println(key);
+                        for(Node mynode:terminal_nodes.get(key)){
+                            if(!cfg.getCurrentNode().getParent().contains(mynode)) {
+                                cfg.getCurrentNode().setParent(mynode);
+                            }
+                        }
+                        terminal_nodes.remove(key);
+                    }
+                }
+            }
+
+            auxNodes.add(auxNode);
+
+        }
+        return null;
+    }
     /**
      * {@inheritDoc}
      *
